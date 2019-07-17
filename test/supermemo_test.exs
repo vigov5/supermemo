@@ -3,7 +3,7 @@ defmodule SupermemoTest do
   use ExCheck
 
   test "first iteration" do
-    assert Supermemo.set_interval(1, 0, 1, 2.5) == 1 
+    assert Supermemo.set_interval(1, 0, 1, 2.5) == 1
   end
 
   test "second iteration" do
@@ -11,7 +11,7 @@ defmodule SupermemoTest do
   end
 
   property :interval do
-    for_all x in int do
+    for_all x in int() do
       implies x > 2 do
         prior = Supermemo.set_interval(1, x - 1, x - 1, 2.5)
         interval = Supermemo.set_interval(1, x, prior, 2.5)
@@ -25,7 +25,7 @@ defmodule SupermemoTest do
     for_all x in such_that(xx in int(1, 100) when xx < 100) do
       q = x / 100
       base_ef = 2.5
-      expected = base_ef + (0.1 - (5 - (q * 5)) * (0.08 + (5 - (q * 5)) * 0.02))
+      expected = base_ef + (0.1 - (5 - q * 5) * (0.08 + (5 - q * 5) * 0.02))
       adjusted = Supermemo.adjust_efactor(base_ef, q)
       adjusted == expected
     end
@@ -35,7 +35,7 @@ defmodule SupermemoTest do
     for_all x in such_that(xx in int(130, 250) when xx < 250) do
       ef = x / 100
       q = 1.0
-      expected = ef + (0.1 - (5 - (q * 5)) * (0.08 + (5 - (q * 5)) * 0.02))
+      expected = ef + (0.1 - (5 - q * 5) * (0.08 + (5 - q * 5) * 0.02))
       adjusted = Supermemo.adjust_efactor(ef, q)
       adjusted == expected
     end
@@ -45,7 +45,7 @@ defmodule SupermemoTest do
     for_all x in such_that(xx in int(130, 250) when xx < 250) do
       ef = x / 100
       q = 0.8
-      expected = ef + (0.1 - (5 - (q * 5)) * (0.08 + (5 - (q * 5)) * 0.02))
+      expected = ef + (0.1 - (5 - q * 5) * (0.08 + (5 - q * 5) * 0.02))
       adjusted = Supermemo.adjust_efactor(ef, q)
       adjusted == expected
     end
@@ -55,9 +55,19 @@ defmodule SupermemoTest do
     for_all x in such_that(xx in int(130, 250) when xx < 250) do
       ef = x / 100
       q = 0.4
-      expected = ef + (0.1 - (5 - (q * 5)) * (0.08 + (5 - (q * 5)) * 0.02))
+      expected = ef + (0.1 - (5 - q * 5) * (0.08 + (5 - q * 5) * 0.02))
       adjusted = Supermemo.adjust_efactor(ef, q)
       adjusted == expected
     end
+  end
+
+  test "some repetitions" do
+    rep1 = %{due: due1} = Supermemo.rep(1)
+    assert match?(%Supermemo.Rep{e_factor: 2.6, interval: 1, iteration: 1}, rep1)
+    assert Date.diff(due1, DateTime.utc_now()) == 1
+
+    rep2 = %{due: due2} = Supermemo.rep(1, rep1)
+    assert match?(%Supermemo.Rep{e_factor: 2.7, interval: 6, iteration: 2}, rep2)
+    assert Date.diff(due2, due1) == 5
   end
 end

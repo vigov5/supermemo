@@ -1,5 +1,4 @@
-defmodule Supermemo do  
-  
+defmodule Supermemo do
   @default_ef 2.5
   @min_ef 1.3
   @first_interval 1
@@ -12,22 +11,19 @@ defmodule Supermemo do
   """
   def rep(score) do
     %Supermemo.Rep{
-                    due: first_due_date,
-                    repeat: repeat?(score),
-                    e_factor: adjust_efactor_or_min(@default_ef, score),
-                    interval: @first_interval,
-                    iteration: 1
-                  }
+      due: first_due_date(),
+      repeat: repeat?(score),
+      e_factor: adjust_efactor_or_min(@default_ef, score),
+      interval: @first_interval,
+      iteration: 1
+    }
   end
 
   @doc """
   Given a score between 0.0 and 1.0, and a `%Supermemo.Rep{}` struct, returns
   a new struct with updated `due` date, `interval`, `iteration` and `e_factor`.
   """
-  def rep(score, %Supermemo.Rep{
-                   e_factor: ef,
-                   interval: interval,
-                   iteration: iteration}) do
+  def rep(score, %Supermemo.Rep{e_factor: ef, interval: interval, iteration: iteration}) do
     new_interval = set_interval(score, iteration, interval, ef)
     new_ef = adjust_efactor_or_min(ef, score)
     _rep(score, new_ef, new_interval, iteration)
@@ -35,17 +31,17 @@ defmodule Supermemo do
 
   defp _rep(score, ef, interval, iteration) do
     %Supermemo.Rep{
-                  due: due_date(interval),
-                  repeat: repeat?(score),
-                  e_factor: ef,
-                  interval: interval,
-                  iteration: find_iteration(score, iteration) + 1
-              }
+      due: due_date(interval),
+      repeat: repeat?(score),
+      e_factor: ef,
+      interval: interval,
+      iteration: find_iteration(score, iteration) + 1
+    }
   end
 
   def due_date(interval) do
-    Timex.Date.universal
-      |> Timex.Date.shift(days: interval)
+    DateTime.utc_now()
+    |> Timex.shift(days: interval)
   end
 
   def set_interval(score, iteration, interval, ef) do
@@ -68,8 +64,8 @@ defmodule Supermemo do
   end
 
   def first_due_date do
-    Timex.Date.universal
-      |> Timex.Date.shift(days: @first_interval)
+    DateTime.utc_now()
+    |> Timex.shift(days: @first_interval)
   end
 
   def repeat?(score) do
@@ -81,14 +77,15 @@ defmodule Supermemo do
 
   def adjust_efactor_or_min(ef, score) do
     adjusted = adjust_efactor(ef, score)
+
     cond do
       adjusted < @min_ef -> @min_ef
       true -> adjusted
     end
   end
-  
+
   def adjust_efactor(ef, score) do
-    score * 5
+    (score * 5)
     |> adjust_efactor_formula(ef)
   end
 
